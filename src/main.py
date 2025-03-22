@@ -1,7 +1,6 @@
 import os
 import subprocess
 
-# Create the Bash script content with corrected escape sequences
 bash_script_content = r"""#!/bin/bash
 
 input_file="${1:-testcase.txt}"
