@@ -1,7 +1,4 @@
-import os
-import subprocess
-
-bash_script_content = r"""#!/bin/bash
+#!/bin/bash
 
 input_file="${1:-testcase.txt}"
 output_file="${2:-output.txt}"
@@ -11,27 +8,25 @@ function ceil(x) {
     return (x == int(x)) ? x : int(x) + (x > 0)
 }
 function round_up(val) {
-    scaled = val * 10
-    return ceil(scaled) / 10
+    return ceil(val * 10) / 10
 }
 
 {
-    # Skip invalid lines (exactly two fields required)
-    if (NF != 2) next
-    if ($2 !~ /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/) next
+    # Skip invalid lines (exactly two fields required and second field is a number)
+    if (NF != 2 || $2 !~ /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?/) return
 
     city = $1
     value = $2 + 0
 
-    # Update statistics
-    if (city in min) {
+    # Initialize statistics for the city if not already done
+    if (!(city in min)) {
+        min[city] = max[city] = sum[city] = value
+        count[city] = 1
+    } else {
         if (value < min[city]) min[city] = value
         if (value > max[city]) max[city] = value
         sum[city] += value
         count[city]++
-    } else {
-        min[city] = max[city] = sum[city] = value
-        count[city] = 1
     }
 }
 END {
@@ -44,25 +39,3 @@ END {
             round_up(max[city])
     }
 }' "$input_file" | sort -t '=' -k1,1 > "$output_file"
-"""
-
-script_name = "script.sh"
-
-try:
-    # Write the Bash script to a file with Unix-style line endings
-    with open(script_name, "w", newline="\n") as f:
-        f.write(bash_script_content)
-
-    # Make the script executable
-    os.chmod(script_name, 0o755)
-
-    # Execute the script
-    subprocess.run(["bash", script_name], check=True)
-
-except subprocess.CalledProcessError as e:
-    print(f"Error executing the script: {e}")
-finally:
-    # Cleanup: Delete the script if needed
-    # pass
-    if os.path.exists(script_name):
-        os.remove(script_name)
